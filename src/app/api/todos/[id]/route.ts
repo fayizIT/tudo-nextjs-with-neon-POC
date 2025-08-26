@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { UpdateTodoData } from '@/types/todo'
 
-interface Params {
-  params: { id: string }
-}
-
-// GET /api/todos/[id] - Get single todo
-export async function GET(request: NextRequest, { params }: Params) {
+export async function GET(request: NextRequest, context: any) {
   try {
+    const { id } = await context.params
+    
     const todo = await prisma.todo.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!todo) {
@@ -33,14 +29,13 @@ export async function GET(request: NextRequest, { params }: Params) {
   }
 }
 
-// PUT /api/todos/[id] - Update todo
-export async function PUT(request: NextRequest, { params }: Params) {
+export async function PUT(request: NextRequest, context: any) {
   try {
-    const body: UpdateTodoData = await request.json()
+    const { id } = await context.params
+    const body = await request.json()
 
-    // Check if todo exists
     const existingTodo = await prisma.todo.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingTodo) {
@@ -50,9 +45,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
       )
     }
 
-    // Update todo
     const todo = await prisma.todo.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(body.title && { title: body.title.trim() }),
         ...(body.description !== undefined && { 
@@ -76,12 +70,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
   }
 }
 
-// DELETE /api/todos/[id] - Delete todo
-export async function DELETE(request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, context: any) {
   try {
-    // Check if todo exists
+    const { id } = await context.params
+
     const existingTodo = await prisma.todo.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingTodo) {
@@ -92,7 +86,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     }
 
     await prisma.todo.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({
